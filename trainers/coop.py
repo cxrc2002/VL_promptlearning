@@ -193,7 +193,7 @@ class CustomCLIP(nn.Module):
         self.dtype = clip_model.dtype
 
     def forward(self, image):
-        image_features = self.image_encoder(image.type(self.dtype))
+        image_features, _, _, _, _ = self.image_encoder(image.type(self.dtype))
 
         prompts = self.prompt_learner()
         tokenized_prompts = self.tokenized_prompts
