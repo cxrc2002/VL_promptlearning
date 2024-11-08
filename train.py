@@ -17,6 +17,9 @@ import datasets.sun397
 import datasets.caltech101
 import datasets.ucf101
 import datasets.imagenet
+import datasets.nwpu_resisc45
+import datasets.rsicd
+import datasets.patternnet
 
 import datasets.imagenet_sketch
 import datasets.imagenetv2

@@ -1,0 +1,330 @@
+***************
+** Arguments **
+***************
+backbone: 
+config_file: configs/trainers/CoOp/rn50_ep50.yaml
+dataset_config_file: configs/datasets/rsicd.yaml
+eval_only: False
+head: 
+load_epoch: None
+model_dir: 
+no_train: False
+opts: ['TRAINER.COOP.N_CTX', '16', 'TRAINER.COOP.CSC', 'False', 'TRAINER.COOP.CLASS_TOKEN_POSITION', 'end', 'DATASET.NUM_SHOTS', '1']
+output_dir: output/rsicd/CoOp/rn50_ep50_1shots/nctx16_cscFalse_ctpend/seed1
+resume: 
+root: /home/xaserver/share_datasets
+seed: 1
+source_domains: None
+target_domains: None
+trainer: CoOp
+transforms: None
+************
+** Config **
+************
+DATALOADER:
+  K_TRANSFORMS: 1
+  NUM_WORKERS: 8
+  RETURN_IMG0: False
+  TEST:
+    BATCH_SIZE: 100
+    SAMPLER: SequentialSampler
+  TRAIN_U:
+    BATCH_SIZE: 32
+    N_DOMAIN: 0
+    N_INS: 16
+    SAME_AS_X: True
+    SAMPLER: RandomSampler
+  TRAIN_X:
+    BATCH_SIZE: 32
+    N_DOMAIN: 0
+    N_INS: 16
+    SAMPLER: RandomSampler
+DATASET:
+  ALL_AS_UNLABELED: False
+  CIFAR_C_LEVEL: 1
+  CIFAR_C_TYPE: 
+  NAME: RSICD
+  NUM_LABELED: -1
+  NUM_SHOTS: 1
+  ROOT: /home/xaserver/share_datasets
+  SOURCE_DOMAINS: ()
+  STL10_FOLD: -1
+  SUBSAMPLE_CLASSES: all
+  TARGET_DOMAINS: ()
+  VAL_PERCENT: 0.1
+INPUT:
+  COLORJITTER_B: 0.4
+  COLORJITTER_C: 0.4
+  COLORJITTER_H: 0.1
+  COLORJITTER_S: 0.4
+  CROP_PADDING: 4
+  CUTOUT_LEN: 16
+  CUTOUT_N: 1
+  GB_K: 21
+  GB_P: 0.5
+  GN_MEAN: 0.0
+  GN_STD: 0.15
+  INTERPOLATION: bicubic
+  NO_TRANSFORM: False
+  PIXEL_MEAN: [0.48145466, 0.4578275, 0.40821073]
+  PIXEL_STD: [0.26862954, 0.26130258, 0.27577711]
+  RANDAUGMENT_M: 10
+  RANDAUGMENT_N: 2
+  RGS_P: 0.2
+  RRCROP_SCALE: (0.08, 1.0)
+  SIZE: (224, 224)
+  TRANSFORMS: ('random_resized_crop', 'random_flip', 'normalize')
+MODEL:
+  BACKBONE:
+    NAME: RN50
+    PRETRAINED: True
+  HEAD:
+    ACTIVATION: relu
+    BN: True
+    DROPOUT: 0.0
+    HIDDEN_LAYERS: ()
+    NAME: 
+  INIT_WEIGHTS: 
+OPTIM:
+  ADAM_BETA1: 0.9
+  ADAM_BETA2: 0.999
+  BASE_LR_MULT: 0.1
+  GAMMA: 0.1
+  LR: 0.002
+  LR_SCHEDULER: cosine
+  MAX_EPOCH: 50
+  MOMENTUM: 0.9
+  NAME: sgd
+  NEW_LAYERS: ()
+  RMSPROP_ALPHA: 0.99
+  SGD_DAMPNING: 0
+  SGD_NESTEROV: False
+  STAGED_LR: False
+  STEPSIZE: (-1,)
+  WARMUP_CONS_LR: 1e-05
+  WARMUP_EPOCH: 1
+  WARMUP_MIN_LR: 1e-05
+  WARMUP_RECOUNT: True
+  WARMUP_TYPE: constant
+  WEIGHT_DECAY: 0.0005
+OUTPUT_DIR: output/rsicd/CoOp/rn50_ep50_1shots/nctx16_cscFalse_ctpend/seed1
+RESUME: 
+SEED: 1
+TEST:
+  COMPUTE_CMAT: False
+  EVALUATOR: Classification
+  FINAL_MODEL: last_step
+  NO_TEST: False
+  PER_CLASS_RESULT: False
+  SPLIT: test
+TRAIN:
+  CHECKPOINT_FREQ: 0
+  COUNT_ITER: train_x
+  PRINT_FREQ: 5
+TRAINER:
+  CDAC:
+    CLASS_LR_MULTI: 10
+    P_THRESH: 0.95
+    RAMPUP_COEF: 30
+    RAMPUP_ITRS: 1000
+    STRONG_TRANSFORMS: ()
+    TOPK_MATCH: 5
+  COCOOP:
+    CTX_INIT: 
+    N_CTX: 16
+    PREC: fp16
+  COOP:
+    CLASS_TOKEN_POSITION: end
+    CSC: False
+    CTX_INIT: 
+    N_CTX: 16
+    PREC: fp16
+  CROSSGRAD:
+    ALPHA_D: 0.5
+    ALPHA_F: 0.5
+    EPS_D: 1.0
+    EPS_F: 1.0
+  DAEL:
+    CONF_THRE: 0.95
+    STRONG_TRANSFORMS: ()
+    WEIGHT_U: 0.5
+  DAELDG:
+    CONF_THRE: 0.95
+    STRONG_TRANSFORMS: ()
+    WEIGHT_U: 0.5
+  DDAIG:
+    ALPHA: 0.5
+    CLAMP: False
+    CLAMP_MAX: 1.0
+    CLAMP_MIN: -1.0
+    G_ARCH: 
+    LMDA: 0.3
+    WARMUP: 0
+  DOMAINMIX:
+    ALPHA: 1.0
+    BETA: 1.0
+    TYPE: crossdomain
+  ENTMIN:
+    LMDA: 0.001
+  FIXMATCH:
+    CONF_THRE: 0.95
+    STRONG_TRANSFORMS: ()
+    WEIGHT_U: 1.0
+  M3SDA:
+    LMDA: 0.5
+    N_STEP_F: 4
+  MCD:
+    N_STEP_F: 4
+  MEANTEACHER:
+    EMA_ALPHA: 0.999
+    RAMPUP: 5
+    WEIGHT_U: 1.0
+  MIXMATCH:
+    MIXUP_BETA: 0.75
+    RAMPUP: 20000
+    TEMP: 2.0
+    WEIGHT_U: 100.0
+  MME:
+    LMDA: 0.1
+  NAME: CoOp
+  SE:
+    CONF_THRE: 0.95
+    EMA_ALPHA: 0.999
+    RAMPUP: 300
+USE_CUDA: True
+VERBOSE: True
+VERSION: 1
+Collecting env info ...
+** System info **
+PyTorch version: 1.11.0+cu102
+Is debug build: False
+CUDA used to build PyTorch: 10.2
+ROCM used to build PyTorch: N/A
+
+OS: Ubuntu 16.04.7 LTS (x86_64)
+GCC version: (Ubuntu 9.4.0-1ubuntu1~16.04) 9.4.0
+Clang version: Could not collect
+CMake version: version 3.10.2
+Libc version: glibc-2.23
+
+Python version: 3.8.13 | packaged by conda-forge | (default, Mar 25 2022, 06:04:18)  [GCC 10.3.0] (64-bit runtime)
+Python platform: Linux-4.4.0-210-generic-x86_64-with-glibc2.10
+Is CUDA available: True
+CUDA runtime version: 10.0.130
+GPU models and configuration: 
+GPU 0: NVIDIA GeForce GTX 1080 Ti
+GPU 1: NVIDIA GeForce GTX 1080 Ti
+GPU 2: NVIDIA GeForce GTX 1080 Ti
+GPU 3: NVIDIA GeForce GTX 1080 Ti
+
+Nvidia driver version: 535.183.01
+cuDNN version: Could not collect
+HIP runtime version: N/A
+MIOpen runtime version: N/A
+
+Versions of relevant libraries:
+[pip3] numpy==1.24.4
+[pip3] torch==1.11.0
+[pip3] torchaudio==0.11.0
+[pip3] torchvision==0.12.0
+[conda] numpy                     1.24.4                   pypi_0    pypi
+[conda] torch                     1.11.0                   pypi_0    pypi
+[conda] torchaudio                0.11.0                   pypi_0    pypi
+[conda] torchvision               0.12.0                   pypi_0    pypi
+        Pillow (10.4.0)
+
+Loading trainer: CoOp
+Loading dataset: RSICD
+Splitting into 50% train, 20% val, and 30% test
+Saved split to /home/xaserver/share_datasets/rsicd/split_rsicd.json
+Creating a 1-shot dataset
+Creating a 1-shot dataset
+Saving preprocessed few-shot data to /home/xaserver/share_datasets/rsicd/split_fewshot/shot_1-seed_1.pkl
+Building transform_train
++ random resized crop (size=(224, 224), scale=(0.08, 1.0))
++ random flip
++ to torch tensor of range [0, 1]
++ normalization (mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
+Building transform_test
++ resize the smaller edge to 224
++ 224x224 center crop
++ to torch tensor of range [0, 1]
++ normalization (mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
+---------  -----
+Dataset    RSICD
+# classes  31
+# train_x  31
+# val      31
+# test     3,277
+---------  -----
+Loading CLIP (backbone: RN50)
+Building custom CLIP
+Initializing a generic context
+Initial context: "X X X X X X X X X X X X X X X X"
+Number of context words (tokens): 16
+Turning off gradients in both the image and the text encoder
+Multiple GPUs detected (n_gpus=4), use all of them!
+Loading evaluator: Classification
+No checkpoint found, train from scratch
+Initialize tensorboard (log_dir=output/rsicd/CoOp/rn50_ep50_1shots/nctx16_cscFalse_ctpend/seed1/tensorboard)
+epoch [1/50] batch [1/1] time 13.311 (13.311) data 0.555 (0.555) loss 3.0547 (3.0547) acc 22.5806 (22.5806) lr 2.0000e-03 eta 0:10:52
+epoch [2/50] batch [1/1] time 0.827 (0.827) data 0.572 (0.572) loss 3.0020 (3.0020) acc 29.0323 (29.0323) lr 1.9980e-03 eta 0:00:39
+epoch [3/50] batch [1/1] time 0.881 (0.881) data 0.628 (0.628) loss 2.6426 (2.6426) acc 32.2581 (32.2581) lr 1.9921e-03 eta 0:00:41
+epoch [4/50] batch [1/1] time 1.343 (1.343) data 0.680 (0.680) loss 2.6133 (2.6133) acc 29.0323 (29.0323) lr 1.9823e-03 eta 0:01:01
+epoch [5/50] batch [1/1] time 1.028 (1.028) data 0.775 (0.775) loss 2.3926 (2.3926) acc 35.4839 (35.4839) lr 1.9686e-03 eta 0:00:46
+epoch [6/50] batch [1/1] time 0.843 (0.843) data 0.523 (0.523) loss 2.4609 (2.4609) acc 29.0323 (29.0323) lr 1.9511e-03 eta 0:00:37
+epoch [7/50] batch [1/1] time 0.960 (0.960) data 0.602 (0.602) loss 2.1465 (2.1465) acc 35.4839 (35.4839) lr 1.9298e-03 eta 0:00:41
+epoch [8/50] batch [1/1] time 0.899 (0.899) data 0.647 (0.647) loss 1.8633 (1.8633) acc 48.3871 (48.3871) lr 1.9048e-03 eta 0:00:37
+epoch [9/50] batch [1/1] time 0.955 (0.955) data 0.660 (0.660) loss 1.8350 (1.8350) acc 41.9355 (41.9355) lr 1.8763e-03 eta 0:00:39
+epoch [10/50] batch [1/1] time 0.945 (0.945) data 0.694 (0.694) loss 1.8438 (1.8438) acc 41.9355 (41.9355) lr 1.8443e-03 eta 0:00:37
+epoch [11/50] batch [1/1] time 0.926 (0.926) data 0.678 (0.678) loss 1.8975 (1.8975) acc 51.6129 (51.6129) lr 1.8090e-03 eta 0:00:36
+epoch [12/50] batch [1/1] time 0.992 (0.992) data 0.725 (0.725) loss 1.6680 (1.6680) acc 54.8387 (54.8387) lr 1.7705e-03 eta 0:00:37
+epoch [13/50] batch [1/1] time 0.983 (0.983) data 0.634 (0.634) loss 1.7578 (1.7578) acc 54.8387 (54.8387) lr 1.7290e-03 eta 0:00:36
+epoch [14/50] batch [1/1] time 1.077 (1.077) data 0.600 (0.600) loss 1.7324 (1.7324) acc 45.1613 (45.1613) lr 1.6845e-03 eta 0:00:38
+epoch [15/50] batch [1/1] time 0.910 (0.910) data 0.594 (0.594) loss 1.5908 (1.5908) acc 61.2903 (61.2903) lr 1.6374e-03 eta 0:00:31
+epoch [16/50] batch [1/1] time 1.166 (1.166) data 0.850 (0.850) loss 1.5342 (1.5342) acc 58.0645 (58.0645) lr 1.5878e-03 eta 0:00:39
+epoch [17/50] batch [1/1] time 1.076 (1.076) data 0.752 (0.752) loss 1.4102 (1.4102) acc 61.2903 (61.2903) lr 1.5358e-03 eta 0:00:35
+epoch [18/50] batch [1/1] time 1.102 (1.102) data 0.777 (0.777) loss 1.3867 (1.3867) acc 64.5161 (64.5161) lr 1.4818e-03 eta 0:00:35
+epoch [19/50] batch [1/1] time 0.947 (0.947) data 0.622 (0.622) loss 1.4160 (1.4160) acc 61.2903 (61.2903) lr 1.4258e-03 eta 0:00:29
+epoch [20/50] batch [1/1] time 1.033 (1.033) data 0.696 (0.696) loss 1.4004 (1.4004) acc 58.0645 (58.0645) lr 1.3681e-03 eta 0:00:31
+epoch [21/50] batch [1/1] time 1.006 (1.006) data 0.701 (0.701) loss 1.0527 (1.0527) acc 74.1936 (74.1936) lr 1.3090e-03 eta 0:00:29
+epoch [22/50] batch [1/1] time 1.173 (1.173) data 0.660 (0.660) loss 1.1396 (1.1396) acc 70.9677 (70.9677) lr 1.2487e-03 eta 0:00:32
+epoch [23/50] batch [1/1] time 1.023 (1.023) data 0.675 (0.675) loss 1.0039 (1.0039) acc 77.4194 (77.4194) lr 1.1874e-03 eta 0:00:27
+epoch [24/50] batch [1/1] time 1.414 (1.414) data 1.042 (1.042) loss 1.1064 (1.1064) acc 74.1936 (74.1936) lr 1.1253e-03 eta 0:00:36
+epoch [25/50] batch [1/1] time 1.002 (1.002) data 0.599 (0.599) loss 0.9253 (0.9253) acc 77.4194 (77.4194) lr 1.0628e-03 eta 0:00:25
+epoch [26/50] batch [1/1] time 1.093 (1.093) data 0.825 (0.825) loss 0.9565 (0.9565) acc 74.1936 (74.1936) lr 1.0000e-03 eta 0:00:26
+epoch [27/50] batch [1/1] time 1.187 (1.187) data 0.873 (0.873) loss 0.8965 (0.8965) acc 77.4194 (77.4194) lr 9.3721e-04 eta 0:00:27
+epoch [28/50] batch [1/1] time 1.155 (1.155) data 0.863 (0.863) loss 1.4131 (1.4131) acc 61.2903 (61.2903) lr 8.7467e-04 eta 0:00:25
+epoch [29/50] batch [1/1] time 1.208 (1.208) data 0.898 (0.898) loss 1.1836 (1.1836) acc 61.2903 (61.2903) lr 8.1262e-04 eta 0:00:25
+epoch [30/50] batch [1/1] time 1.425 (1.425) data 0.949 (0.949) loss 0.8975 (0.8975) acc 77.4194 (77.4194) lr 7.5131e-04 eta 0:00:28
+epoch [31/50] batch [1/1] time 1.046 (1.046) data 0.716 (0.716) loss 0.8110 (0.8110) acc 77.4194 (77.4194) lr 6.9098e-04 eta 0:00:19
+epoch [32/50] batch [1/1] time 0.919 (0.919) data 0.650 (0.650) loss 0.9399 (0.9399) acc 80.6452 (80.6452) lr 6.3188e-04 eta 0:00:16
+epoch [33/50] batch [1/1] time 0.982 (0.982) data 0.700 (0.700) loss 0.9429 (0.9429) acc 77.4194 (77.4194) lr 5.7422e-04 eta 0:00:16
+epoch [34/50] batch [1/1] time 1.019 (1.019) data 0.712 (0.712) loss 0.8164 (0.8164) acc 80.6452 (80.6452) lr 5.1825e-04 eta 0:00:16
+epoch [35/50] batch [1/1] time 0.948 (0.948) data 0.674 (0.674) loss 0.7710 (0.7710) acc 74.1936 (74.1936) lr 4.6417e-04 eta 0:00:14
+epoch [36/50] batch [1/1] time 1.084 (1.084) data 0.805 (0.805) loss 1.0059 (1.0059) acc 80.6452 (80.6452) lr 4.1221e-04 eta 0:00:15
+epoch [37/50] batch [1/1] time 1.067 (1.067) data 0.766 (0.766) loss 0.9956 (0.9956) acc 74.1936 (74.1936) lr 3.6258e-04 eta 0:00:13
+epoch [38/50] batch [1/1] time 0.946 (0.946) data 0.685 (0.685) loss 0.8604 (0.8604) acc 74.1936 (74.1936) lr 3.1545e-04 eta 0:00:11
+epoch [39/50] batch [1/1] time 1.198 (1.198) data 0.798 (0.798) loss 0.7871 (0.7871) acc 74.1936 (74.1936) lr 2.7103e-04 eta 0:00:13
+epoch [40/50] batch [1/1] time 1.026 (1.026) data 0.760 (0.760) loss 0.8228 (0.8228) acc 77.4194 (77.4194) lr 2.2949e-04 eta 0:00:10
+epoch [41/50] batch [1/1] time 1.111 (1.111) data 0.820 (0.820) loss 1.1484 (1.1484) acc 64.5161 (64.5161) lr 1.9098e-04 eta 0:00:10
+epoch [42/50] batch [1/1] time 1.090 (1.090) data 0.808 (0.808) loss 0.6885 (0.6885) acc 80.6452 (80.6452) lr 1.5567e-04 eta 0:00:08
+epoch [43/50] batch [1/1] time 1.099 (1.099) data 0.765 (0.765) loss 0.5825 (0.5825) acc 87.0968 (87.0968) lr 1.2369e-04 eta 0:00:07
+epoch [44/50] batch [1/1] time 1.158 (1.158) data 0.760 (0.760) loss 0.7783 (0.7783) acc 74.1936 (74.1936) lr 9.5173e-05 eta 0:00:06
+epoch [45/50] batch [1/1] time 1.189 (1.189) data 0.840 (0.840) loss 0.7856 (0.7856) acc 77.4194 (77.4194) lr 7.0224e-05 eta 0:00:05
+epoch [46/50] batch [1/1] time 1.053 (1.053) data 0.633 (0.633) loss 0.8066 (0.8066) acc 87.0968 (87.0968) lr 4.8943e-05 eta 0:00:04
+epoch [47/50] batch [1/1] time 1.023 (1.023) data 0.659 (0.659) loss 0.7319 (0.7319) acc 77.4194 (77.4194) lr 3.1417e-05 eta 0:00:03
+epoch [48/50] batch [1/1] time 1.225 (1.225) data 0.754 (0.754) loss 0.6499 (0.6499) acc 80.6452 (80.6452) lr 1.7713e-05 eta 0:00:02
+epoch [49/50] batch [1/1] time 0.930 (0.930) data 0.584 (0.584) loss 0.9399 (0.9399) acc 70.9677 (70.9677) lr 7.8853e-06 eta 0:00:00
+epoch [50/50] batch [1/1] time 1.025 (1.025) data 0.697 (0.697) loss 0.8340 (0.8340) acc 70.9677 (70.9677) lr 1.9733e-06 eta 0:00:00
+Checkpoint saved to output/rsicd/CoOp/rn50_ep50_1shots/nctx16_cscFalse_ctpend/seed1/prompt_learner/model.pth.tar-50
+Finish training
+Deploy the last-epoch model
+Evaluate on the *test* set
+=> result
+* total: 3,277
+* correct: 1,833
+* accuracy: 55.9%
+* error: 44.1%
+* macro_f1: 52.9%
+Elapsed: 0:01:22

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # custom config
-DATA=/path/to/datasets
+DATA="/home/xaserver/share_datasets"
 TRAINER=CoOp
 
 DATASET=$1
