@@ -172,7 +172,7 @@ class PromptLearner(nn.Module):
     def forward(self, out):
 
         ctx = self.ctx #(4, n_ctx, dim)
-        # ctx = ctx + 0.2*out
+        ctx = ctx + out
         if ctx.dim() == 3:
             ctx = ctx.unsqueeze(0).expand(self.n_cls, -1, -1, -1)
         # print(ctx.shape)
@@ -285,6 +285,12 @@ class CoOp(TrainerX):
         self.sched2 = build_lr_scheduler(self.optim2, cfg.OPTIM)
         self.register_model("prompt_learner", self.model.prompt_learner, self.optim1, self.sched1)
         self.register_model("prompt_argument", self.model.prompt_argument, self.optim2, self.sched2)
+       
+        """
+        self.optim = build_optimizer(self.model, cfg.OPTIM)
+        self.sched = build_lr_scheduler(self.optim, cfg.OPTIM)
+        self.register_model("prompt_learner", self.model.prompt_learner, self.optim, self.sched)
+        """
 
         self.scaler = GradScaler() if cfg.TRAINER.COOP.PREC == "amp" else None
 
@@ -308,9 +314,19 @@ class CoOp(TrainerX):
             self.scaler.step(self.optim)
             self.scaler.update()
         else:
+            # before_params = [param.clone() for name, param in self.model.named_parameters() if "prompt_argument" in name]
+            
             output = self.model(image)
             loss = F.cross_entropy(output, label)
             self.model_backward_and_update(loss)
+            
+            # after_params = [param.clone() for name, param in self.model.named_parameters() if "prompt_argument" in name]
+            
+            # if not torch.equal(before_params[0],after_params[0]):
+            #     print("Parameter has been updated.")
+            # else:
+            #     print("Parameter has not been updated.")
+
 
         loss_summary = {
             "loss": loss.item(),
