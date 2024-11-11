@@ -170,15 +170,27 @@ class PromptLearner(nn.Module):
         # self.ctx (4, n_ctx=8, ctx_dim)
 
     def forward(self, out):
+        
+        """
+        out is (n, 4, 8, dim) batch_size, 4 prompts, 8 words, dim
 
-        ctx = self.ctx #(4, n_ctx, dim)
-        ctx = ctx + out
+        """
+        batch_size = out.size(0)
+
+        ctx = self.ctx  # (4, n_ctx, dim)
         if ctx.dim() == 3:
-            ctx = ctx.unsqueeze(0).expand(self.n_cls, -1, -1, -1)
-        # print(ctx.shape)
+            ctx = ctx.unsqueeze(0).expand(batch_size, -1, -1, -1)        
+        
+        # ctx = ctx + out # (n, 4, n_ctx, dim)
 
-        prefix = self.token_prefix.unsqueeze(1).expand(-1, ctx.size(1), -1, -1)
-        suffix = self.token_suffix.unsqueeze(1).expand(-1, ctx.size(1), -1, -1)
+        if ctx.dim() == 4:
+            ctx = ctx.unsqueeze(1).expand(-1, self.n_cls, -1, -1, -1) # (n, n_cls, 4, n_ctx, dim)
+        
+
+        prefix = self.token_prefix.unsqueeze(1).expand(-1, ctx.size(2), -1, -1) # (n_cls, 4, 1, dim)
+        suffix = self.token_suffix.unsqueeze(1).expand(-1, ctx.size(2), -1, -1)
+        prefix = prefix.unsqueeze(0).expand(batch_size, -1, -1, -1, -1) # (n, n_cls, 4, 1, dim)
+        suffix = suffix.unsqueeze(0).expand(batch_size, -1, -1, -1, -1)
         # print(suffix)
 
         if self.class_token_position == "end":
@@ -188,12 +200,12 @@ class PromptLearner(nn.Module):
                     ctx,     # (n_cls, 4, n_ctx, dim)
                     suffix,  # (n_cls, 4, *, dim)
                 ],
-                dim=2,
+                dim=3,
             )
         else:
             raise ValueError
         # print(prompts.shape)
-        # prompts (n_cls, 4, *, dim)
+        # prompts (n, n_cls, 4, *, dim)
         return prompts
 
 
@@ -209,11 +221,13 @@ class CustomCLIP(nn.Module):
         self.dtype = clip_model.dtype
 
     def forward(self, image):
+        """
         image_features, out1, out2, out3, out4 = self.image_encoder(image.type(self.dtype))  #(n, outdim), (n, 256, 56, 56)..
         out1 = self.prompt_argument(out1)  
         out2 = self.prompt_argument(out2)
         out3 = self.prompt_argument(out3)
         out4 = self.prompt_argument(out4) # (n, 8, ctx_dim)
+        
 
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
         logit_scale = self.logit_scale.exp()
@@ -238,6 +252,32 @@ class CustomCLIP(nn.Module):
             logits.append(logit)
         
         logits = torch.stack(logits)
+        """
+        
+        image_features, out1, out2, out3, out4 = self.image_encoder(image.type(self.dtype))  #(n, outdim), (n, 256, 56, 56)..
+        out1 = self.prompt_argument(out1)  
+        out2 = self.prompt_argument(out2)
+        out3 = self.prompt_argument(out3)
+        out4 = self.prompt_argument(out4) # (n, 8, ctx_dim)
+        out = torch.stack([out1, out2, out3, out4], dim=1) # (n, 4, 8, ctx_dim)
+
+        prompts = self.prompt_learner(out)  # (n, n_cls, 4, *, dim)
+        tokenized_prompts = self.tokenized_prompts #(n_cls, *, )
+        tokenized_prompts = tokenized_prompts.unsqueeze(1).expand(-1, 4, -1)
+        tokenized_prompts = tokenized_prompts.unsqueeze(0).expand(image_features.size(0), -1, -1, -1) 
+        tokenized_prompts = tokenized_prompts.reshape((tokenized_prompts.size(0)*tokenized_prompts.size(1)*tokenized_prompts.size(2), tokenized_prompts.size(3)))  # (n*n_cls*4, *)
+        prompts = prompts.reshape((prompts.size(0)*prompts.size(1)*prompts.size(2), prompts.size(3), prompts.size(4))) # (n*n_cls*4, *, dim)
+        text_features = self.text_encoder(prompts, tokenized_prompts)
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        text_features = text_features.reshape((image_features.size(0), -1, 4, text_features.size(1)))  # (n, n_cls, 4, outdim)
+
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True) # (n, outdim)
+        logit_scale = self.logit_scale.exp()
+
+        logits = torch.einsum("nd,nkmd-> nkm", image_features, text_features)
+        logits = logits*logit_scale
+        logits = torch.mean(logits, dim=2)
+
 
         return logits
 

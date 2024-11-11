@@ -62,20 +62,21 @@ class Prompt_Argument(nn.Module):
         super().__init__()
         self.dtype = clip_model.dtype
         self.n_ctx = cfg.TRAINER.COOP.N_CTX
+        half_nctx = self.n_ctx //2
         self.ctx_dim = clip_model.ln_final.weight.shape[0]
         self.num_heads = 8
 
-        self.gal_pool = nn.AdaptiveAvgPool2d(1).to(self.dtype)
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=32, stride=32, bias=False).to(self.dtype)
-        self.conv2 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=64, stride=64, bias=False).to(self.dtype)
-        self.conv3 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=128, stride=128, bias=False).to(self.dtype)
-        self.conv4 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=256, stride=256, bias=False).to(self.dtype)
+        self.gal_pool = nn.AdaptiveAvgPool2d(1)
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=256//half_nctx, stride=256//half_nctx, bias=False)
+        self.conv2 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=512//half_nctx, stride=512//half_nctx, bias=False)
+        self.conv3 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=1024//half_nctx, stride=1024//half_nctx, bias=False)
+        self.conv4 = nn.Conv1d(in_channels=1, out_channels=self.ctx_dim, kernel_size=2048//half_nctx, stride=2048//half_nctx, bias=False)
 
-        self.positional_embedding = nn.Parameter(torch.randn(self.n_ctx, self.ctx_dim) / self.ctx_dim ** 0.5).to(self.dtype)
-        self.k_proj = nn.Linear(self.ctx_dim, self.ctx_dim).to(self.dtype)
-        self.q_proj = nn.Linear(self.ctx_dim, self.ctx_dim).to(self.dtype)
-        self.v_proj = nn.Linear(self.ctx_dim, self.ctx_dim).to(self.dtype)
-        self.c_proj = nn.Linear(self.ctx_dim, self.ctx_dim).to(self.dtype)
+        self.positional_embedding = nn.Parameter(torch.randn(self.n_ctx//2, self.ctx_dim) / self.ctx_dim ** 0.5)
+        self.k_proj = nn.Linear(self.ctx_dim, self.ctx_dim)
+        self.q_proj = nn.Linear(self.ctx_dim, self.ctx_dim)
+        self.v_proj = nn.Linear(self.ctx_dim, self.ctx_dim)
+        self.c_proj = nn.Linear(self.ctx_dim, self.ctx_dim)
 
     def forward(self, x):
         """
@@ -98,7 +99,7 @@ class Prompt_Argument(nn.Module):
             x = self.conv4(x)
         else:
             raise Exception("Something went wrong!")
-        # x.shape (n, ctx_dim, 8)
+        # x.shape (n, ctx_dim, 8//2)
 
         x = x.permute(2, 0, 1) # (8, n, ctx_dim)
         x = x + self.positional_embedding[:, None, :].to(x.device)
@@ -122,7 +123,7 @@ class Prompt_Argument(nn.Module):
             need_weights=False
         )
         x = x.permute(1, 0, 2) 
-        # (n, 8, ctx_dim)
+        # (n, 8//2, ctx_dim)
         return x
 
 
@@ -140,7 +141,7 @@ class PromptLearner(nn.Module):
         
         print("Initializing a generic context")
         prompt_prefix = " ".join(["X"] * n_ctx)
-        ctx_vectors = torch.empty(4, n_ctx, ctx_dim, dtype=dtype)
+        ctx_vectors = torch.empty(4, n_ctx//2, ctx_dim, dtype=dtype)
         nn.init.normal_(ctx_vectors, std=0.02)
 
         print(f'Initial context: "{prompt_prefix}"')
@@ -170,9 +171,13 @@ class PromptLearner(nn.Module):
         # self.ctx (4, n_ctx=8, ctx_dim)
 
     def forward(self, out):
+        """
+        out is (4, n_ctx//2, dim)
 
-        ctx = self.ctx #(4, n_ctx, dim)
-        ctx = ctx + out
+        """
+
+        ctx = self.ctx #(4, n_ctx//2, dim)
+        ctx = torch.cat([out, ctx], dim=1)
         if ctx.dim() == 3:
             ctx = ctx.unsqueeze(0).expand(self.n_cls, -1, -1, -1)
         # print(ctx.shape)
@@ -191,6 +196,7 @@ class PromptLearner(nn.Module):
                 dim=2,
             )
         else:
+        
             raise ValueError
         # print(prompts.shape)
         # prompts (n_cls, 4, *, dim)
@@ -201,7 +207,7 @@ class CustomCLIP(nn.Module):
     def __init__(self, cfg, classnames, clip_model):
         super().__init__()
         self.prompt_learner = PromptLearner(cfg, classnames, clip_model)
-        self.prompt_argument = Prompt_Argument(cfg, clip_model)
+        self.prompt_argument = Prompt_Argument(cfg, clip_model).to(clip_model.dtype)
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
         self.image_encoder = clip_model.visual
         self.text_encoder = TextEncoder(clip_model)
@@ -213,7 +219,7 @@ class CustomCLIP(nn.Module):
         out1 = self.prompt_argument(out1)  
         out2 = self.prompt_argument(out2)
         out3 = self.prompt_argument(out3)
-        out4 = self.prompt_argument(out4) # (n, 8, ctx_dim)
+        out4 = self.prompt_argument(out4) # (n, 4, ctx_dim)
 
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
         logit_scale = self.logit_scale.exp()
